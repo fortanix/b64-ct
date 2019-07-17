@@ -1,3 +1,32 @@
+# Fast and secure Base64 encoding/decoding
+
+This crate provides an implementation of Base64 encoding/decoding that is
+designed to be resistant against software side-channel attacks (such as timing
+& cache attacks), see the [documentation] for details. On certain platforms it
+also uses SIMD making it very fast. This makes it suitable for e.g. decoding
+cryptographic private keys in PEM format.
+
+The API is very similar to the base64 implementation in the old rustc-serialize
+crate, making it easy to use in existing projects.
+
+[documentation]: https://docs.rs/b64-ct
+
+# Implementation
+
+Depending on the runtime CPU architecture, this crate uses different
+implementations with different security properties.
+
+* x86 with AVX2: All lookup tables are implemented with SIMD
+  instructions. No secret-dependent memory accceses.
+* Other platforms: Lookups are limited to 64-byte aligned lookup tables. On
+  platforms with 64-byte cache lines this may be sufficient to prevent
+  certain cache side-channel attacks. However, it's known that this is [not
+  sufficient for all platforms].
+
+We graciously welcome contributed support for other platforms!
+
+[not sufficient on some platforms]: https://ts.data61.csiro.au/projects/TS/cachebleed/
+
 # Contributing
 
 We gratefully accept bug reports and contributions from the community.

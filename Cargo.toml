@@ -1,0 +1,31 @@
+[package]
+name = "b64-ct"
+version = "0.1.0"
+authors = ["Fortanix, Inc."]
+license = "MPL-2.0"
+edition = "2018"
+description = """
+Fast and secure Base64 encoding/decoding.
+
+This crate provides an implementation of Base64 encoding/decoding that is
+designed to be resistant against software side-channel attacks (such as timing
+& cache attacks), see the documentation for details. On certain platforms it
+also uses SIMD making it very fast. This makes it suitable for e.g. decoding
+cryptographic private keys in PEM format.
+
+The API is very similar to the base64 implementation in the old rustc-serialize
+crate, making it easy to use in existing projects.
+"""
+repository = "https://github.com/fortanix/b64-ct/"
+keywords = ["base64", "constant-time"]
+categories = ["cryptography", "encoding", "no-std"]
+readme = "README.md"
+
+[features]
+default = ["std"]
+std = []
+nightly = [] # Used only for testing
+
+[dev-dependencies]
+rand = "0.6"
+paste = "0.1"

@@ -131,9 +131,11 @@ unsafe fn decode_avx2(input: __m256i) -> (__m256i, u32, u32) {
     const CMP_FLAGS: i32 = _SIDD_UBYTE_OPS | _SIDD_CMP_RANGES | _SIDD_BIT_MASK;
     let mask0 = _mm_cmpestrm(valid_nonws_set, 14, lane0, 16, CMP_FLAGS);
     let mask1 = _mm_cmpestrm(valid_nonws_set, 14, lane1, 16, CMP_FLAGS);
+
     // Combine bitmasks into integer value
-    let valid_mask =
-        _mm_extract_epi16(mask0, 0) as u32 | ((_mm_extract_epi16(mask1, 0) as u32) << 16);
+    let first = _mm_extract_epi16(mask0, 0) as u16;
+    let second = _mm_extract_epi16(mask1, 0) as u16;
+    let valid_mask = first as u32 + ((second as u32) << 16);
 
     (result, invalid_mask as _, valid_mask as _)
 }

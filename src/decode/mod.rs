@@ -181,6 +181,7 @@ mod tests {
     use super::*;
 
     use crate::test_support::rand_base64_size;
+    use crate::{ToBase64};
 
     pub(super) fn test_avx2() -> avx2::Avx2 {
         unsafe { avx2::Avx2::new() }
@@ -202,6 +203,7 @@ mod tests {
             cmp_rand_1kb,
             whitespace_skipped,
             all_bytes,
+            wrapping_base64,
         },
     ];
 
@@ -340,6 +342,34 @@ mod tests {
                 Err(_) => Err(()),
             };
             assert_eq!(output, expected);
+        }
+    }
+
+    fn wrapping_base64<D: Decoder, P: Packer>(decoder: D, packer: P) {
+        const BASE64_PEM_WRAP: usize = 64;
+
+        static BASE64_PEM: crate::Config = crate::Config {
+            char_set: crate::CharacterSet::Standard,
+            newline: crate::Newline::LF,
+            pad: true,
+            line_length: Some(BASE64_PEM_WRAP),
+        };
+
+        let mut v: Vec<u8> = vec![];
+        let bytes_per_line = BASE64_PEM_WRAP * 3 / 4;
+        for _i in 0..2*bytes_per_line {
+            let encoded = v.to_base64(BASE64_PEM);
+            let decoded = decode64(encoded.as_bytes(), decoder, packer).unwrap();
+            assert_eq!(v, decoded);
+            v.push(0);
+        }
+
+        v = vec![];
+        for _i in 0..1000 {
+            let encoded = v.to_base64(BASE64_PEM);
+            let decoded = decode64(encoded.as_bytes(), decoder, packer).unwrap();
+            assert_eq!(v, decoded);
+            v.push(rand::random::<u8>());
         }
     }
 }

@@ -50,6 +50,7 @@
 
 extern crate alloc;
 #[cfg(any(test, feature = "std"))]
+#[allow(unused_imports)]
 #[macro_use]
 extern crate std;
 #[cfg(all(test, feature = "nightly"))]
@@ -62,6 +63,7 @@ mod test_support;
 #[macro_use]
 mod misc;
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
 mod lut_align64;
 

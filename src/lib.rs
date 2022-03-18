@@ -46,7 +46,7 @@
 //! [not sufficient on some platforms]: https://ts.data61.csiro.au/projects/TS/cachebleed/
 
 #![no_std]
-#![cfg_attr(all(test, feature = "nightly"), feature(test))]
+#![cfg_attr(all(test, feature = "nightly"), feature(test, bench_black_box))]
 
 extern crate alloc;
 #[cfg(any(test, feature = "std"))]

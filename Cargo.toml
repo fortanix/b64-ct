@@ -27,5 +27,5 @@ std = []
 nightly = [] # Used only for testing
 
 [dev-dependencies]
-rand = "0.6"
+rand = "0.7"
 paste = "0.1"

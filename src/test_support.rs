@@ -38,14 +38,16 @@ macro_rules! with_cartesian_products {
 #[macro_export]
 macro_rules! generate_tests {
     (
-        $_a:ident<$a:ident>: { $($an:ident, $at:expr;)* },
-        $_b:ident<$b:ident>: { $($bn:ident, $bt:expr;)* },
+        $_a:ident<$a:ident>: { $($(#[$am:meta])* $an:ident, $at:expr;)* },
+        $_b:ident<$b:ident>: { $($(#[$bm:meta])* $bn:ident, $bt:expr;)* },
         tests: { $($tn:ident,)* },
     ) => {
-        with_cartesian_products!( generate_tests ((@ $a $b)) ($($tn)*) ($(($an, $at))*) ($(($bn, $bt))*) );
+        with_cartesian_products!( generate_tests ((@ $a $b)) ($($tn)*) ($(($(#[$am])* $an, $at))*) ($(($(#[$bm])*$bn, $bt))*) );
     };
-    ((@ $a:ident $b:ident) $tn:ident ($an:ident, $at:expr) ($bn:ident, $bt:expr)) => {
+    ((@ $a:ident $b:ident) $tn:ident ($(#[$am:meta])* $an:ident, $at:expr) ($(#[$bm:meta])* $bn:ident, $bt:expr)) => {
         paste::item! {
+            $(#[$am])*
+            $(#[$bm])*
             #[test]
             #[allow(non_snake_case)]
             fn [< $tn _ $a $an _ $b $bn >]() {

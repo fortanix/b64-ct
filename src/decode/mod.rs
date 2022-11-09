@@ -9,6 +9,7 @@ mod lut_align64;
 
 use alloc::vec::Vec;
 use core::cmp;
+use core::fmt;
 
 #[must_use]
 struct BlockResult {
@@ -26,6 +27,12 @@ pub enum Error {
     /// The input contained a character (at the given index) not part of the
     /// base64 format.
     InvalidCharacter(usize),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self, f)
+    }
 }
 
 trait Decoder: Copy {
@@ -371,6 +378,13 @@ mod tests {
             assert_eq!(v, decoded);
             v.push(rand::random::<u8>());
         }
+    }
+
+    #[test]
+    fn display_errors() {
+        println!("Invalid length is {}", Error::InvalidLength);
+        println!("Invalid trailer is {}", Error::InvalidTrailer);
+        println!("Invalid character is {}", Error::InvalidCharacter(0));
     }
 }
 

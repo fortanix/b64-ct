@@ -4,7 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
+
+#[cfg(target_arch = "x86")]
+use core::arch::x86::*;
 
 #[rustfmt::skip]
 pub(crate) unsafe fn dup_mm_setr_epi8(e: [i8; 16]) -> __m256i {

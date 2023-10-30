@@ -180,13 +180,11 @@ where
 }
 
 pub(super) fn encode64_arch(input: &[u8], config: crate::Config) -> String {
-    if cfg!(any(target_arch = "x86", target_arch = "x86_64")) {
-        // Code specific to x86 and x86_64 architectures
-        unsafe {
-            if is_x86_feature_detected!("avx2") {
-                let avx2 = avx2::Avx2::new();
-                return encode64(input, config, avx2, avx2);
-            }
+    unsafe {
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        if is_x86_feature_detected!("avx2") {
+            let avx2 = avx2::Avx2::new();
+            return encode64(input, config, avx2, avx2);
         }
     }
     encode64(input, config, lut_align64::LutAlign64, Simple)

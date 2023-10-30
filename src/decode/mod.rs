@@ -170,17 +170,15 @@ fn decode64<D: Decoder, P: Packer>(input: &[u8], decoder: D, packer: P) -> Resul
 }
 
 pub(super) fn decode64_arch(input: &[u8]) -> Result<Vec<u8>, Error> {
-    if cfg!(any(target_arch = "x86", target_arch = "x86_64")) {
-        // Code specific to x86 and x86_64 architectures
-        unsafe {
-            if is_x86_feature_detected!("avx2")
-                && is_x86_feature_detected!("bmi1")
-                && is_x86_feature_detected!("sse4.2")
-                && is_x86_feature_detected!("popcnt")
-            {
-                let avx2 = avx2::Avx2::new();
-                return decode64(input, avx2, avx2);
-            }
+    unsafe {
+        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+        if is_x86_feature_detected!("avx2")
+            && is_x86_feature_detected!("bmi1")
+            && is_x86_feature_detected!("sse4.2")
+            && is_x86_feature_detected!("popcnt")
+        {
+            let avx2 = avx2::Avx2::new();
+            return decode64(input, avx2, avx2);
         }
     }
     decode64(input, lut_align64::LutAlign64, Simple)

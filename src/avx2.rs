@@ -10,6 +10,9 @@ use core::arch::x86_64::*;
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 
+#[cfg(any(target_arch = "arm", target_arch = "armv7"))]
+use core::arch::arm::*;
+
 #[rustfmt::skip]
 pub(crate) unsafe fn dup_mm_setr_epi8(e: [i8; 16]) -> __m256i {
     _mm256_setr_epi8(

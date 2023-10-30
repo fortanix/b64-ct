@@ -10,6 +10,9 @@ use core::arch::x86_64::*;
 #[cfg(target_arch = "x86")]
 use core::arch::x86::*;
 
+#[cfg(any(target_arch = "arm", target_arch = "armv7"))]
+use core::arch::arm::*;
+
 use crate::avx2::*;
 
 /// # Safety

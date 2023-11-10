@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
 mod lut_align64;
 
@@ -170,8 +171,8 @@ fn decode64<D: Decoder, P: Packer>(input: &[u8], decoder: D, packer: P) -> Resul
 }
 
 pub(super) fn decode64_arch(input: &[u8]) -> Result<Vec<u8>, Error> {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     unsafe {
-        #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         if is_x86_feature_detected!("avx2")
             && is_x86_feature_detected!("bmi1")
             && is_x86_feature_detected!("sse4.2")
@@ -191,6 +192,7 @@ mod tests {
     use crate::test_support::rand_base64_size;
     use crate::{ToBase64};
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub(super) fn test_avx2() -> avx2::Avx2 {
         unsafe { avx2::Avx2::new() }
     }
@@ -391,12 +393,14 @@ mod tests {
 
 #[cfg(all(test, feature = "nightly"))]
 mod benches {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     use super::{tests::test_avx2, *};
 
     use test::Bencher;
 
     use crate::test_support::rand_base64_size;
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[bench]
     fn avx2_1mb(b: &mut Bencher) {
         let input = rand_base64_size(1024 * 1024);
@@ -415,6 +419,7 @@ mod benches {
         });
     }
 
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[bench]
     fn avx2_1kb(b: &mut Bencher) {
         let input = rand_base64_size(1024);

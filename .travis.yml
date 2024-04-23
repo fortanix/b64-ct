@@ -6,14 +6,34 @@ branches:
     - trying
     # Not really necessary, just to get a green badge on “master”
     - master
+
 language: rust
 
 jobs:
   include:
+    # amd64 linux
     - rust: stable
+      os: linux
+      arch: amd64
     - rust: beta
+      os: linux
+      arch: amd64
     - rust: nightly
       env: FEATURES=--features=nightly
-script:
-  - cargo test --no-default-features
-  - cargo test $FEATURES
+      os: linux
+      arch: amd64
+
+    # arm64 linux
+    - rust: stable
+      os: linux
+      arch: arm64
+    - rust: beta
+      os: linux
+      arch: arm64
+    - rust: nightly
+      env: FEATURES=--features=nightly
+      os: linux
+      arch: arm64
+
+install: ci/install.sh
+script: ci/script.sh

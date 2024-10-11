@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(target_arch = "x86_64")]
 mod avx2;
 mod lut_align64;
 
@@ -171,7 +171,7 @@ fn decode64<D: Decoder, P: Packer>(input: &[u8], decoder: D, packer: P) -> Resul
 }
 
 pub(super) fn decode64_arch(input: &[u8]) -> Result<Vec<u8>, Error> {
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     unsafe {
         if is_x86_feature_detected!("avx2")
             && is_x86_feature_detected!("bmi1")
@@ -190,20 +190,20 @@ mod tests {
     use super::*;
 
     use crate::test_support::rand_base64_size;
-    use crate::{ToBase64};
+    use crate::ToBase64;
 
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     pub(super) fn test_avx2() -> avx2::Avx2 {
         unsafe { avx2::Avx2::new() }
     }
 
     generate_tests![
         decoders<D>: {
-            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] avx2, test_avx2();
+            #[cfg(target_arch = "x86_64")] avx2, test_avx2();
             lut_align64, lut_align64::LutAlign64;
         },
         packers<P>: {
-            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] avx2, test_avx2();
+            #[cfg(target_arch = "x86_64")] avx2, test_avx2();
             simple, Simple;
         },
         tests: {
@@ -367,7 +367,7 @@ mod tests {
 
         let mut v: Vec<u8> = vec![];
         let bytes_per_line = BASE64_PEM_WRAP * 3 / 4;
-        for _i in 0..2*bytes_per_line {
+        for _i in 0..2 * bytes_per_line {
             let encoded = v.to_base64(BASE64_PEM);
             let decoded = decode64(encoded.as_bytes(), decoder, packer).unwrap();
             assert_eq!(v, decoded);
@@ -393,7 +393,7 @@ mod tests {
 
 #[cfg(all(test, feature = "nightly"))]
 mod benches {
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     use super::tests::test_avx2;
     use super::*;
 
@@ -401,7 +401,7 @@ mod benches {
 
     use crate::test_support::rand_base64_size;
 
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     #[bench]
     fn avx2_1mb(b: &mut Bencher) {
         let input = rand_base64_size(1024 * 1024);
@@ -420,7 +420,7 @@ mod benches {
         });
     }
 
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     #[bench]
     fn avx2_1kb(b: &mut Bencher) {
         let input = rand_base64_size(1024);

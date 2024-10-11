@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(target_arch = "x86_64")]
 mod avx2;
 mod lut_align64;
 
@@ -59,16 +59,16 @@ trait SplitArrayExt {
 impl<T> SplitArrayExt for T {}
 
 macro_rules! impl_lcm_array {
-    ($($am:ident / )* $a:literal, $($bm:ident / )* $b:literal, $lcm:literal) => {
+    ($($am:ident / )? $a:literal, $($bm:ident / )? $b:literal, $lcm:literal) => {
         impl Lcm for ([u8; $a], [u8; $b]) {
             type Array = [u8; $lcm];
         }
 
-        impl_lcm_array!(@split $($am / )* $a, $lcm);
-        impl_lcm_array!(@split $($bm / )* $b, $lcm);
+        impl_lcm_array!(@split $($am / )? $a, $lcm);
+        impl_lcm_array!(@split $($bm / )? $b, $lcm);
     };
-    (@split $($nm:ident / )* $n:literal, $lcm:literal) => {
-        $(#[cfg(all(not($nm), $nm))])*
+    (@split $nm:ident / $n:literal, $lcm:literal) => {};
+    (@split $n:literal, $lcm:literal) => {
         impl<T> SplitArray<[T; $n]> for [T; $lcm] {
             type Output = [[T; $n]; $lcm / $n];
 
@@ -181,7 +181,7 @@ where
 }
 
 pub(super) fn encode64_arch(input: &[u8], config: crate::Config) -> String {
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     unsafe {
         if is_x86_feature_detected!("avx2") {
             let avx2 = avx2::Avx2::new();
@@ -197,7 +197,7 @@ mod tests {
 
     use crate::{Config, Newline, STANDARD, URL_SAFE};
 
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     pub(super) fn test_avx2() -> avx2::Avx2 {
         unsafe { avx2::Avx2::new() }
     }
@@ -205,11 +205,11 @@ mod tests {
     generate_tests![
         encoders<E>: {
             lut_align64, lut_align64::LutAlign64;
-            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] avx2, test_avx2();
+            #[cfg(target_arch = "x86_64")] avx2, test_avx2();
         },
         unpackers<U>: {
             simple, Simple;
-            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] avx2, test_avx2();
+            #[cfg(target_arch = "x86_64")] avx2, test_avx2();
         },
         tests: {
             encode,
@@ -271,7 +271,7 @@ mod tests {
 
 #[cfg(all(test, feature = "nightly"))]
 mod benches {
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     use super::tests::test_avx2;
     use super::*;
 
@@ -279,7 +279,7 @@ mod benches {
 
     use rand::{thread_rng, RngCore};
 
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     #[bench]
     fn avx2_1mb(b: &mut Bencher) {
         let mut input = std::vec![0; 1024*1024];
@@ -300,7 +300,7 @@ mod benches {
         });
     }
 
-    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    #[cfg(target_arch = "x86_64")]
     #[bench]
     fn avx2_1kb(b: &mut Bencher) {
         let mut input = std::vec![0; 1024];

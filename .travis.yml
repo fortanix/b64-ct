@@ -8,31 +8,36 @@ branches:
     - master
 
 language: rust
+os: linux
+dist: focal
 
 jobs:
   include:
     # amd64 linux
     - rust: stable
-      os: linux
       arch: amd64
+      before_install: 
+      - sudo apt update
+      - sudo apt install -y gcc-multilib # Allow compilation for 32-bit target
     - rust: beta
-      os: linux
       arch: amd64
+      before_install: 
+      - sudo apt update
+      - sudo apt install -y gcc-multilib
     - rust: nightly
       env: FEATURES=--features=nightly
-      os: linux
       arch: amd64
+      before_install: 
+      - sudo apt update
+      - sudo apt install -y gcc-multilib
 
     # arm64 linux
     - rust: stable
-      os: linux
       arch: arm64
     - rust: beta
-      os: linux
       arch: arm64
     - rust: nightly
       env: FEATURES=--features=nightly
-      os: linux
       arch: arm64
 
 install: ci/install.sh

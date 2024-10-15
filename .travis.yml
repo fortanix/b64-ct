@@ -16,11 +16,21 @@ jobs:
     # amd64 linux
     - rust: stable
       arch: amd64
+      before_install: 
+      - sudo apt update
+      - sudo apt install -y gcc-multilib # Allow compilation for 32-bit target
     - rust: beta
       arch: amd64
+      before_install: 
+      - sudo apt update
+      - sudo apt install -y gcc-multilib
     - rust: nightly
       env: FEATURES=--features=nightly
       arch: amd64
+      before_install: 
+      - sudo apt update
+      - sudo apt install -y gcc-multilib
+
 
     # arm64 linux
     - rust: stable

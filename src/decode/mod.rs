@@ -190,7 +190,7 @@ mod tests {
     use super::*;
 
     use crate::test_support::rand_base64_size;
-    use crate::{ToBase64};
+    use crate::ToBase64;
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub(super) fn test_avx2() -> avx2::Avx2 {

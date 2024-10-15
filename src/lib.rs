@@ -63,7 +63,7 @@ mod test_support;
 #[macro_use]
 mod misc;
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
 mod lut_align64;
 

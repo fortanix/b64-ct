@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 mod avx2;
 mod lut_align64;
 
@@ -181,7 +181,7 @@ where
 }
 
 pub(super) fn encode64_arch(input: &[u8], config: crate::Config) -> String {
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     unsafe {
         if is_x86_feature_detected!("avx2") {
             let avx2 = avx2::Avx2::new();
@@ -197,7 +197,7 @@ mod tests {
 
     use crate::{Config, Newline, STANDARD, URL_SAFE};
 
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub(super) fn test_avx2() -> avx2::Avx2 {
         unsafe { avx2::Avx2::new() }
     }
@@ -205,11 +205,11 @@ mod tests {
     generate_tests![
         encoders<E>: {
             lut_align64, lut_align64::LutAlign64;
-            #[cfg(target_arch = "x86_64")] avx2, test_avx2();
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] avx2, test_avx2();
         },
         unpackers<U>: {
             simple, Simple;
-            #[cfg(target_arch = "x86_64")] avx2, test_avx2();
+            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] avx2, test_avx2();
         },
         tests: {
             encode,
@@ -271,7 +271,7 @@ mod tests {
 
 #[cfg(all(test, feature = "nightly"))]
 mod benches {
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     use super::tests::test_avx2;
     use super::*;
 
@@ -279,7 +279,7 @@ mod benches {
 
     use rand::{thread_rng, RngCore};
 
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[bench]
     fn avx2_1mb(b: &mut Bencher) {
         let mut input = std::vec![0; 1024*1024];
@@ -300,7 +300,7 @@ mod benches {
         });
     }
 
-    #[cfg(target_arch = "x86_64")]
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[bench]
     fn avx2_1kb(b: &mut Bencher) {
         let mut input = std::vec![0; 1024];

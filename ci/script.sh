@@ -9,6 +9,9 @@ cargo test $FEATURES
 # need to be repeated on other os and arch.
 if [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_CPU_ARCH" = "amd64" ]
 then
+    cargo test --no-default-features --target=i686-unknown-linux-gnu
+    cargo test $FEATURES --target=i686-unknown-linux-gnu
+
     cargo wasi test --no-default-features
     cargo wasi test $FEATURES
 

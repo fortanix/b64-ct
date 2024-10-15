@@ -367,7 +367,7 @@ mod tests {
 
         let mut v: Vec<u8> = vec![];
         let bytes_per_line = BASE64_PEM_WRAP * 3 / 4;
-        for _i in 0..2 * bytes_per_line {
+        for _i in 0..(2 * bytes_per_line) {
             let encoded = v.to_base64(BASE64_PEM);
             let decoded = decode64(encoded.as_bytes(), decoder, packer).unwrap();
             assert_eq!(v, decoded);

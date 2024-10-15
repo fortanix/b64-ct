@@ -59,16 +59,16 @@ trait SplitArrayExt {
 impl<T> SplitArrayExt for T {}
 
 macro_rules! impl_lcm_array {
-    ($($am:ident / )* $a:literal, $($bm:ident / )* $b:literal, $lcm:literal) => {
+    ($($am:ident / )? $a:literal, $($bm:ident / )? $b:literal, $lcm:literal) => {
         impl Lcm for ([u8; $a], [u8; $b]) {
             type Array = [u8; $lcm];
         }
 
-        impl_lcm_array!(@split $($am / )* $a, $lcm);
-        impl_lcm_array!(@split $($bm / )* $b, $lcm);
+        impl_lcm_array!(@split $($am / )? $a, $lcm);
+        impl_lcm_array!(@split $($bm / )? $b, $lcm);
     };
-    (@split $($nm:ident / )* $n:literal, $lcm:literal) => {
-        $(#[cfg(all(not($nm), $nm))])*
+    (@split $nm:ident / $n:literal, $lcm:literal) => {};
+    (@split $n:literal, $lcm:literal) => {
         impl<T> SplitArray<[T; $n]> for [T; $lcm] {
             type Output = [[T; $n]; $lcm / $n];
 

@@ -6,6 +6,8 @@ set -xeo pipefail
 # need to be repeated on other os and arch.
 if [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$TRAVIS_CPU_ARCH" = "amd64" ]
 then
+    rustup target add i686-unknown-linux-gnu
+
     rustup target add wasm32-wasi
     cargo install cargo-wasi
     curl -L https://github.com/CraneStation/wasmtime/releases/download/dev/wasmtime-dev-x86_64-linux.tar.xz \
@@ -16,4 +18,5 @@ then
 
     rustup target add x86_64-apple-darwin
     rustup target add aarch64-apple-darwin
+
 fi

@@ -31,7 +31,6 @@ jobs:
       - sudo apt update
       - sudo apt install -y gcc-multilib
 
-
     # arm64 linux
     - rust: stable
       arch: arm64

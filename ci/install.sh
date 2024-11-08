@@ -9,7 +9,6 @@ then
     rustup target add i686-unknown-linux-gnu
 
     rustup target add wasm32-wasip1
-    cargo install cargo-wasi
     curl -L https://github.com/CraneStation/wasmtime/releases/download/dev/wasmtime-dev-x86_64-linux.tar.xz \
         | sudo tar xJf - --strip-components=1 -C /usr/local/bin wasmtime-dev-x86_64-linux/wasmtime
 

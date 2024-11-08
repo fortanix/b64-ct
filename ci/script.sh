@@ -12,8 +12,8 @@ then
     cargo test --no-default-features --target=i686-unknown-linux-gnu
     cargo test $FEATURES --target=i686-unknown-linux-gnu
 
-    cargo wasi test --no-default-features
-    cargo wasi test $FEATURES
+    CARGO_TARGET_WASM32_WASIP1_RUNNER=wasmtime cargo test --target=wasm32-wasip1 --no-default-features
+    CARGO_TARGET_WASM32_WASIP1_RUNNER=wasmtime cargo test --target=wasm32-wasip1 $FEATURES 
 
     cargo check --target aarch64-linux-android
     cargo check --target armv7-linux-androideabi

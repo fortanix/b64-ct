@@ -39,10 +39,10 @@ impl Unpacker for Simple {
     }
 }
 
-trait Lcm {
-    type Array: AsRef<[u8]> + AsMut<[u8]> + Default;
-}
+trait Lcm<TL, TR>: AsRef<[u8]> + AsMut<[u8]> + Default {}
 
+//TODO: false positive due to bug in `rustc` dead code analysis; remove when fixed
+#[allow(dead_code)]
 const fn lcm(a: usize, b: usize) -> usize {
     // Euclidean algorithm
     const fn gcd(a: usize, b: usize) -> usize {
@@ -86,9 +86,7 @@ macro_rules! impl_lcm_array {
     };
     ([]) => {};
     (@impl $a:literal $b:literal) => {
-        impl Lcm for ([u8; $a], [u8; $b]) {
-            type Array = [u8; lcm($a, $b)];
-        }
+        impl Lcm<[u8; $a], [u8; $b]> for [u8; lcm($a, $b)] {}
     }
 }
 
@@ -139,16 +137,16 @@ impl crate::Newline {
     }
 }
 
-fn encode64<E: Encoder, U: Unpacker>(
+fn encode64<E: Encoder, U: Unpacker, L>(
     input: &[u8],
     config: crate::Config,
     encoder: E,
     unpacker: U,
 ) -> String
 where
-    (U::Output, E::Block): Lcm,
-    U::Output: SplitFrom<<(U::Output, E::Block) as Lcm>::Array>,
-    E::Block: SplitFrom<<(U::Output, E::Block) as Lcm>::Array>,
+    L: Lcm<U::Output, E::Block>,
+    U::Output: SplitFrom<L>,
+    E::Block: SplitFrom<L>,
 {
     let mut len = crate::misc::div_roundup(input.len(), 3) * 4;
     let mut next_nl = config.line_length;
@@ -161,7 +159,7 @@ where
     }
     let mut output = Vec::with_capacity(len);
 
-    let mut buffer = <(U::Output, E::Block) as Lcm>::Array::default();
+    let mut buffer = L::default();
 
     let mut input_iter = input.chunks(size_of::<U::Input>());
     while input_iter.len() > 0 {
@@ -251,11 +249,11 @@ mod tests {
         },
     ];
 
-    fn encode<E: Encoder, U: Unpacker>(encoder: E, unpacker: U)
+    fn encode<E: Encoder, U: Unpacker, L>(encoder: E, unpacker: U)
     where
-        (U::Output, E::Block): Lcm,
-        U::Output: SplitFrom<<(U::Output, E::Block) as Lcm>::Array>,
-        E::Block: SplitFrom<<(U::Output, E::Block) as Lcm>::Array>,
+        L: Lcm<U::Output, E::Block>,
+        U::Output: SplitFrom<L>,
+        E::Block: SplitFrom<L>,
     {
         static ENCODE_TESTS: &[(&[u8], Config, &str)] = &[
             // basic tests (from rustc-serialize)

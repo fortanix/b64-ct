@@ -94,7 +94,7 @@ trait SplitFrom<T>: Sized {
 }
 
 impl<const M: usize, const N: usize> SplitFrom<[u8; N]> for [u8; M] {
-    /// Turn an array of size N into an slice of arrays with a total size of A * M.
+    /// Reinterpret an array of size `N` as a slice of length-`M` arrays.
     /// Only works if M is an integer divisor of N.
     fn split_from(from: &mut [u8; N]) -> &mut [Self] {
         // Safety:

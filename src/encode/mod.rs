@@ -49,10 +49,7 @@ const fn lcm(a: usize, b: usize) -> usize {
         if b == 0 {
             return a;
         }
-        if b < a {
-            return gcd(b, a);
-        }
-        gcd(a, b % a)
+        gcd(b, a % b)
     }
 
     a * b / gcd(a, b)

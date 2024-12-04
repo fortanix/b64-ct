@@ -9,6 +9,7 @@ mod avx2;
 mod lut_align64;
 
 use alloc::{string::String, vec::Vec};
+use core::mem::size_of;
 
 trait Encoder: Copy {
     type Block: AsRef<[u8]> + AsMut<[u8]> + Default;
@@ -38,51 +39,79 @@ impl Unpacker for Simple {
     }
 }
 
-trait Lcm {
-    type Array: AsRef<[u8]> + AsMut<[u8]> + Default;
+trait Lcm<TL, TR>: AsRef<[u8]> + AsMut<[u8]> + Default {}
+
+//TODO: false positive due to bug in `rustc` dead code analysis; remove when fixed
+#[allow(dead_code)]
+const fn lcm(a: usize, b: usize) -> usize {
+    // Euclidean algorithm
+    const fn gcd(a: usize, b: usize) -> usize {
+        if b == 0 {
+            return a;
+        }
+        gcd(b, a % b)
+    }
+
+    a * b / gcd(a, b)
 }
 
-trait SplitArray<T> {
-    type Output: AsRef<[T]> + AsMut<[T]>;
-    fn split_mut_internal(&mut self) -> &mut Self::Output;
-}
+/// Implement `Lcm` for `([u8; A], [u8; B])`, for each A and B in the cartesian
+/// product of the input list with itself.
+///
+/// For example:
+///
+/// ```notest
+/// impl_lcm_array!([32 4 1]);
+/// ```
+///
+/// This would implement for (A,B) in { (32,32) (32,4) (32,1) (4,32) (4,4) (4,1) (1,32) (1,4) (1,1) }.
+macro_rules! impl_lcm_array {
+    ([$first:literal $($rest:literal)*]) => {
+        $(
+            const _: () = const {
+                if $rest >= $first {
+                    panic!("The array sizes in the impl_lcm_array! invocation must appear in monotonically decreasing order");
+                }
+            };
 
-trait SplitArrayExt {
-    fn split_mut<T>(&mut self) -> &mut [T]
-    where
-        Self: SplitArray<T>,
-    {
-        self.split_mut_internal().as_mut()
+            impl_lcm_array!(@impl $first $rest);
+            impl_lcm_array!(@impl $rest $first);
+        )*
+        impl_lcm_array!(@impl $first $first);
+
+        impl_lcm_array!([$($rest)*]);
+    };
+    ([]) => {};
+    (@impl $a:literal $b:literal) => {
+        impl Lcm<[u8; $a], [u8; $b]> for [u8; lcm($a, $b)] {}
     }
 }
 
-impl<T> SplitArrayExt for T {}
+impl_lcm_array!([32 4 1]);
 
-macro_rules! impl_lcm_array {
-    ($($am:ident / )* $a:literal, $($bm:ident / )* $b:literal, $lcm:literal) => {
-        impl Lcm for ([u8; $a], [u8; $b]) {
-            type Array = [u8; $lcm];
-        }
-
-        impl_lcm_array!(@split $($am / )* $a, $lcm);
-        impl_lcm_array!(@split $($bm / )* $b, $lcm);
-    };
-    (@split $($nm:ident / )* $n:literal, $lcm:literal) => {
-        $(#[cfg(all(not($nm), $nm))])*
-        impl<T> SplitArray<[T; $n]> for [T; $lcm] {
-            type Output = [[T; $n]; $lcm / $n];
-
-            fn split_mut_internal(&mut self) -> &mut Self::Output {
-                unsafe { &mut *(self as *mut _ as *mut _) }
-            }
-        }
-    };
+trait SplitFrom<T>: Sized {
+    fn split_from(from: &mut T) -> &mut [Self];
 }
 
-impl_lcm_array!(32, skip / 32, 32);
-impl_lcm_array!(skip / 32, 1, 32);
-impl_lcm_array!(4, skip / 32, 32);
-impl_lcm_array!(4, 1, 4);
+impl<const M: usize, const N: usize> SplitFrom<[u8; N]> for [u8; M] {
+    /// Reinterpret an array of size `N` as a slice of length-`M` arrays.
+    /// Only works if M is an integer divisor of N.
+    fn split_from(from: &mut [u8; N]) -> &mut [Self] {
+        // Safety:
+        //
+        // The lifetime, size and alignment of the output is exactly the same
+        // as the input
+        unsafe {
+            const {
+                assert!(M <= N);
+                assert!(N % M == 0);
+                assert!(core::mem::align_of::<Self>() == core::mem::align_of::<u8>());
+                assert!(N / M * size_of::<Self>() == size_of::<[u8; N]>());
+            }
+            core::slice::from_raw_parts_mut(from.as_mut_ptr() as _, N / M)
+        }
+    }
+}
 
 trait TakePrefix: Sized {
     fn take_prefix(&mut self, mid: usize) -> Self;
@@ -105,15 +134,16 @@ impl crate::Newline {
     }
 }
 
-fn encode64<E: Encoder, U: Unpacker>(
+fn encode64<E: Encoder, U: Unpacker, L>(
     input: &[u8],
     config: crate::Config,
     encoder: E,
     unpacker: U,
 ) -> String
 where
-    (U::Output, E::Block): Lcm,
-    <(U::Output, E::Block) as Lcm>::Array: SplitArray<U::Output> + SplitArray<E::Block>,
+    L: Lcm<U::Output, E::Block>,
+    U::Output: SplitFrom<L>,
+    E::Block: SplitFrom<L>,
 {
     let mut len = crate::misc::div_roundup(input.len(), 3) * 4;
     let mut next_nl = config.line_length;
@@ -126,12 +156,12 @@ where
     }
     let mut output = Vec::with_capacity(len);
 
-    let mut buffer = <(U::Output, E::Block) as Lcm>::Array::default();
+    let mut buffer = L::default();
 
-    let mut input_iter = input.chunks(core::mem::size_of::<U::Input>());
+    let mut input_iter = input.chunks(size_of::<U::Input>());
     while input_iter.len() > 0 {
         let mut input_len = 0;
-        for chunk in buffer.split_mut::<U::Output>() {
+        for chunk in <U::Output>::split_from(&mut buffer) {
             let mut input_block = U::Input::default();
             if let Some(input_next) = input_iter.next() {
                 input_len += input_next.len();
@@ -139,7 +169,7 @@ where
             }
             unpacker.unpack_block(&input_block, chunk);
         }
-        for chunk in buffer.split_mut::<E::Block>() {
+        for chunk in <E::Block>::split_from(&mut buffer) {
             encoder.encode_block(chunk, config.char_set);
         }
 
@@ -216,10 +246,11 @@ mod tests {
         },
     ];
 
-    fn encode<E: Encoder, U: Unpacker>(encoder: E, unpacker: U)
+    fn encode<E: Encoder, U: Unpacker, L>(encoder: E, unpacker: U)
     where
-        (U::Output, E::Block): Lcm,
-        <(U::Output, E::Block) as Lcm>::Array: SplitArray<U::Output> + SplitArray<E::Block>,
+        L: Lcm<U::Output, E::Block>,
+        U::Output: SplitFrom<L>,
+        E::Block: SplitFrom<L>,
     {
         static ENCODE_TESTS: &[(&[u8], Config, &str)] = &[
             // basic tests (from rustc-serialize)

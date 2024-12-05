@@ -20,6 +20,7 @@ repository = "https://github.com/fortanix/b64-ct/"
 keywords = ["base64", "constant-time"]
 categories = ["cryptography", "encoding", "no-std"]
 readme = "README.md"
+rust-version = "1.79.0"
 
 [features]
 default = ["std"]

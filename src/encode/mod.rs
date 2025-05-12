@@ -275,8 +275,8 @@ mod benches {
     use rand::{thread_rng, RngCore};
 
     #[bench]
-    fn avx2_1mb(b: &mut Bencher) {
-        let mut input = std::vec![0; 1024*1024];
+    fn avx2_32kb(b: &mut Bencher) {
+        let mut input = std::vec![0; 32*1024];
         thread_rng().fill_bytes(&mut input);
         b.iter(|| {
             let ret = encode64(&input, crate::STANDARD, test_avx2(), test_avx2());
@@ -285,8 +285,8 @@ mod benches {
     }
 
     #[bench]
-    fn lut_align64_1mb(b: &mut Bencher) {
-        let mut input = std::vec![0; 1024*1024];
+    fn lut_align64_32kb(b: &mut Bencher) {
+        let mut input = std::vec![0; 32*1024];
         thread_rng().fill_bytes(&mut input);
         b.iter(|| {
             let ret = encode64(&input, crate::STANDARD, lut_align64::LutAlign64, Simple);

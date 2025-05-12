@@ -403,8 +403,8 @@ mod benches {
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     #[bench]
-    fn avx2_1mb(b: &mut Bencher) {
-        let input = rand_base64_size(1024 * 1024);
+    fn avx2_32kb(b: &mut Bencher) {
+        let input = rand_base64_size(32 * 1024);
         b.iter(|| {
             let ret = decode64(&input, test_avx2(), test_avx2()).unwrap();
             std::hint::black_box(ret);
@@ -412,8 +412,8 @@ mod benches {
     }
 
     #[bench]
-    fn lut_align64_1mb(b: &mut Bencher) {
-        let input = rand_base64_size(1024 * 1024);
+    fn lut_align64_32kb(b: &mut Bencher) {
+        let input = rand_base64_size(32 * 1024);
         b.iter(|| {
             let ret = decode64(&input, lut_align64::LutAlign64, Simple).unwrap();
             std::hint::black_box(ret);
